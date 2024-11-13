@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { RxDotsHorizontal } from "react-icons/rx";
-import { Avatar, Menu, MenuItem } from "@mui/material";
+import { Avatar, Menu, MenuItem, TextField } from "@mui/material";
 import { AiFillTwitterCircle } from "react-icons/ai";
 
 import { TweetProps } from "@/types/TweetProps";
@@ -16,7 +16,8 @@ import Share from "./Share";
 import Counters from "./Counters";
 import { getFullURL } from "@/utilities/misc/getFullURL";
 import { VerifiedToken } from "@/types/TokenProps";
-import { deleteTweet } from "@/utilities/fetch";
+import { deleteTweet, updateTweet } from "@/utilities/fetch";
+import { NewTweetProps } from "@/types/TweetProps";
 import PreviewDialog from "../dialog/PreviewDialog";
 import { shimmer } from "@/utilities/misc/shimmer";
 import NewReply from "./NewReply";
@@ -26,11 +27,17 @@ import { SnackbarProps } from "@/types/SnackbarProps";
 import CircularLoading from "../misc/CircularLoading";
 import { sleepFunction } from "@/utilities/misc/sleep";
 
+import { useFormik } from "formik";
+import * as yup from "yup";
+
 export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token: VerifiedToken }) {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+    const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [count, setCount] = useState(0);
     const [snackbar, setSnackbar] = useState<SnackbarProps>({ message: "", severity: "success", open: false });
 
     const queryClient = useQueryClient();
@@ -51,6 +58,14 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
             router.replace(`/${tweet.author.username}`);
         },
         onError: (error) => console.log(error),
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (updatedTweetData: { text: string; authorId: string }) => updateTweet(tweet.id, updatedTweetData),
+        onSuccess: () => {
+            queryClient.invalidateQueries(["tweets", tweet.author.username]);
+        },
+        onError: (error) => console.error(error),
     });
 
     const handleAnchorClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -88,6 +103,72 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
         mutation.mutate(jsonId);
     };
 
+
+    // const validationSchema = yup.object({
+    //     text: yup
+    //         .string()
+    //         .max(280, "Tweet text should be of maximum 280 characters length.")
+    //         .required("Tweet text can't be empty."),
+    // });
+
+    // const formik = useFormik({
+    //     initialValues: {
+    //         text: tweet.text,
+    //         authorId: tweet.authorId,
+    //     },
+    //     enableReinitialize: true,
+    //     validationSchema: validationSchema,
+    //     onSubmit: async (values, { resetForm }) => {
+    //         try {
+    //             setIsUpdating(true);
+    //             await updateMutation.mutateAsync(values);
+    //             resetForm();
+    //             setIsUpdateOpen(false); 
+    //         } catch (error) {
+    //             console.error("Failed to update tweet:", error);
+    //         } finally {
+    //             setIsUpdating(false);
+    //         }
+    //     },
+    // });
+
+    const validationSchema = yup.object({
+        text: yup
+            .string()
+            .max(280, "Tweet text should be of maximum 280 characters length.")
+            .required("Tweet text can't be empty."),
+    });
+
+    const formik = useFormik({
+        initialValues: {
+            text: tweet.text,
+            authorId: tweet.authorId,
+        },
+        enableReinitialize: true,
+        validationSchema,
+        onSubmit: async (values, { resetForm }) => {
+            try {
+                setIsUpdating(true);
+                await updateMutation.mutateAsync(values);
+                resetForm();
+                setIsUpdateOpen(false);
+            } catch (error) {
+                console.error("Failed to update tweet:", error);
+            } finally {
+                setIsUpdating(false);
+            }
+        },
+    });
+    
+    const customHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setCount(e.target.value.length);
+        formik.handleChange(e);
+    };
+
+    if (formik.isSubmitting) {
+        return <CircularLoading />;
+    }
+
     return (
         <div>
             <div className={`single-tweet tweet ${tweet.isReply && "reply"}`}>
@@ -122,6 +203,9 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
                                 <Menu anchorEl={anchorEl} onClose={handleAnchorClose} open={Boolean(anchorEl)}>
                                     <MenuItem onClick={handleConfirmationClick} className="delete">
                                         Delete
+                                    </MenuItem>
+                                    <MenuItem className="delete" onClick={()=> setIsUpdateOpen(true)}>
+                                        Update
                                     </MenuItem>
                                 </Menu>
                             </>
@@ -197,6 +281,40 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
                     </dialog>
                 </div>
             )}
+
+            {isUpdateOpen && (
+                <div className="html-modal-wrapper">
+                <dialog open className="confirm" onClick={(e) => e.stopPropagation()}>
+                    <h1>Update Tweet</h1>
+                    <form onSubmit={formik.handleSubmit}>
+                        <TextField
+                            placeholder="What's happening?"
+                            multiline
+                            fullWidth
+                            minRows={3}
+                            name="text"
+                            value={formik.values.text}
+                            onChange={customHandleChange}
+                            error={formik.touched.text && Boolean(formik.errors.text)}
+                            helperText={formik.touched.text && formik.errors.text}
+                        />
+                        {isUpdating ? <CircularLoading /> : (
+                            <>
+                                <button type="submit"
+                                className="btn btn-danger">Save</button>
+                                <button className="btn btn-white" onClick={() => setIsUpdateOpen(false)}>Cancel</button>
+                            </>
+                        )}
+                    </form>
+                </dialog>
+            </div>
+            )}
+
+
         </div>
     );
 }
+
+
+
+

@@ -34,16 +34,34 @@ export default function RootPage() {
     const handleLogInClose = () => {
         setIsLogInOpen(false);
     };
+    // const handleTestLogin = async () => {
+    //     setIsLoggingAsTest(true);
+    //     const response = await logInAsTest();
+    //     if (!response.success) {
+    //         setIsLoggingAsTest(false);
+    //         setSnackbar({ message: "Something went wrong! Please try again.", severity: "error", open: true });
+    //         return;
+    //     }
+    //     router.push("/explore");
+    // };
+
     const handleTestLogin = async () => {
-        setIsLoggingAsTest(true);
-        const response = await logInAsTest();
-        if (!response.success) {
+        try {
+            setIsLoggingAsTest(true);
+            const response = await logInAsTest();
+            if (!response?.success) {
+                setIsLoggingAsTest(false);
+                setSnackbar({ message: "Something went wrong! Please try again.", severity: "error", open: true });
+                return;
+            }
+            router.push("/explore");
+        } catch (error) {
             setIsLoggingAsTest(false);
-            setSnackbar({ message: "Something went wrong! Please try again.", severity: "error", open: true });
-            return;
+            setSnackbar({ message: "An error occurred during login. Please try again.", severity: "error", open: true });
+            console.error("Error in handleTestLogin:", error);
         }
-        router.push("/explore");
     };
+    
 
     if (isLoggingAsTest) return <GlobalLoading />;
 

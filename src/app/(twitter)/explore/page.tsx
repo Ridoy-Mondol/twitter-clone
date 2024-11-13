@@ -36,7 +36,6 @@ export default function ExplorePage() {
     );
 
     if (isPending) return <CircularLoading />;
-
     return (
         <main>
             <h1 className="page-name">Explore</h1>

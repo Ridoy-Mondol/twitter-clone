@@ -25,8 +25,10 @@ export default function SignUpDialog({ open, handleSignUpClose }: SignUpDialogPr
             .required("Username is required.")
             .test("checkUserExists", "User already exists.", async (value) => {
                 if (value) {
+                    // const response = await checkUserExists(value);
+                    // if (response.success) return false;
                     const response = await checkUserExists(value);
-                    if (response.success) return false;
+                    if (response.success) return false; 
                 }
                 return true;
             }),
@@ -49,7 +51,8 @@ export default function SignUpDialog({ open, handleSignUpClose }: SignUpDialogPr
             const response = await createUser(JSON.stringify(values));
             if (!response.success) {
                 return setSnackbar({
-                    message: "Something went wrong. Please try again.",
+                    // message: "Something went wrong. Please try again.",
+                    message: response.message,
                     severity: "error",
                     open: true,
                 });

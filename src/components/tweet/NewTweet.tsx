@@ -50,17 +50,37 @@ export default function NewTweet({ token, handleSubmit }: NewTweetProps) {
         },
         validationSchema: validationSchema,
         onSubmit: async (values, { resetForm }) => {
-            if (photoFile) {
-                const path: string | void = await uploadFile(photoFile);
-                if (!path) throw new Error("Error uploading image.");
-                values.photoUrl = path;
-                setPhotoFile(null);
+            // if (photoFile) {
+            //     const path: string | void = await uploadFile(photoFile);
+            //     if (!path) throw new Error("Error uploading image.");
+            //     values.photoUrl = path;
+            //     setPhotoFile(null);
+            // }
+            // mutation.mutate(JSON.stringify(values));
+            // resetForm();
+            // setCount(0);
+            // setShowDropzone(false);
+            // if (handleSubmit) handleSubmit();
+
+            try {
+                if (photoFile) {
+                    const userId = token.id;
+                    const path = await uploadFile(photoFile, userId);
+                    if (!path) throw new Error("Error uploading image to Supabase.");
+                    values.photoUrl = path;
+                    setPhotoFile(null);
+                }
+    
+                await mutation.mutateAsync(JSON.stringify(values));
+                resetForm();
+                setCount(0);
+                setShowDropzone(false);
+                if (handleSubmit) handleSubmit();
+    
+            } catch (error) {
+                console.error("Failed to upload image or create tweet:", error);
             }
-            mutation.mutate(JSON.stringify(values));
-            resetForm();
-            setCount(0);
-            setShowDropzone(false);
-            if (handleSubmit) handleSubmit();
+
         },
     });
 

@@ -23,7 +23,7 @@ export default function Uploader({ handlePhotoChange }: { handlePhotoChange: (fi
     });
 
     return (
-        <div className="dropzone">
+        <div className="dropzone" style={{ cursor: "pointer" }}>
             <div {...getRootProps()}>
                 <input {...getInputProps()} />
                 <p>Drag and drop an image file here, or click to select one</p>

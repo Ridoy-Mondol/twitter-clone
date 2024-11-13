@@ -22,7 +22,7 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "postinstall": "cd src && npx prisma generate"
+        "postinstall": "cd src && npx prisma generate --schema=prisma/schema.prisma"
     },
     "dependencies": {
         "@emoji-mart/data": "^1.1.2",
@@ -45,6 +45,7 @@
         "framer-motion": "^10.12.12",
         "jose": "^4.14.4",
         "next": "^13.4.2",
+        "prisma": "^4.14.1",
         "react": "18.2.0",
         "react-dom": "18.2.0",
         "react-dropzone": "^14.2.3",
@@ -57,7 +58,6 @@
         "encoding": "^0.1.13",
         "eslint-config-prettier": "^8.8.0",
         "prettier": "^2.8.8",
-        "prisma": "^4.14.1",
         "sass": "^1.62.1",
         "ts-node": "^10.9.1",
         "typescript": "^5.0.4"

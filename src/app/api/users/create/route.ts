@@ -71,6 +71,10 @@ export async function POST(request: NextRequest) {
 
         return response;
     } catch (error: unknown) {
-        return NextResponse.json({ success: false, error });
+        return NextResponse.json({ 
+            success: false, 
+            error: error,
+            message: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
     }
 }

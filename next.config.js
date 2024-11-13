@@ -5,7 +5,7 @@ const nextConfig = {
         serverActions: true,
     },
     images: {
-        domains: ["nifemmkaxhltrtqltltq.supabase.co"],
+        domains: ['edduuatujlvepjzkvtau.supabase.co'],
     },
     async headers() {
         return [

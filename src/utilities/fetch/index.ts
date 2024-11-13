@@ -119,7 +119,9 @@ export const logout = async () => {
     });
 };
 
-export const createUser = async (newUser: string) => {
+export const createUser = async (newUser: string) =>
+ {
+    console.log("HOST_URL:", HOST_URL);
     const response = await fetch(`${HOST_URL}/api/users/create`, {
         method: "POST",
         headers: {
@@ -207,6 +209,22 @@ export const deleteTweet = async (tweetId: string, tweetAuthor: string, tokenOwn
     return json;
 };
 
+export const updateTweet = async (tweetId: string, updatedData: string) => {
+    const response = await fetch(`${HOST_URL}/api/tweets/${tweetId}/update`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: updatedData,
+    });
+
+    const json = await response.json();
+    if (!json.success) throw new Error(json.message ? json.message : "Something went wrong.");
+    return json;
+};
+
+
+
 export const createReply = async (reply: string, tweetAuthor: string, tweetId: string) => {
     const response = await fetch(`${HOST_URL}/api/tweets/${tweetAuthor}/${tweetId}/reply`, {
         method: "POST",
@@ -269,7 +287,11 @@ export const getUserMessages = async (username: string) => {
 
 export const checkUserExists = async (username: string) => {
     const response = await fetch(`${HOST_URL}/api/users/exists?q=${username}`);
-    return response.json();
+    if (!response.ok) {
+        console.error("Error fetching checkUserExists", response.status, response.statusText);
+        return { success: false };
+    }
+    return await response.json();
 };
 
 export const deleteConversation = async (participants: string[], tokenOwnerId: string) => {
