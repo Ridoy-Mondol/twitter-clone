@@ -65,7 +65,7 @@ export default function NewTweet({ token, handleSubmit }: NewTweetProps) {
             try {
                 if (photoFile) {
                     const userId = token.id;
-                    const path = await uploadFile(photoFile, userId);
+                    const path = await uploadFile(photoFile);
                     if (!path) throw new Error("Error uploading image to Supabase.");
                     values.photoUrl = path;
                     setPhotoFile(null);
