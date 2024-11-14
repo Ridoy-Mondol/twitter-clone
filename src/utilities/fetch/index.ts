@@ -209,19 +209,52 @@ export const deleteTweet = async (tweetId: string, tweetAuthor: string, tokenOwn
     return json;
 };
 
-export const updateTweet = async (tweetId: string, updatedData: string) => {
-    const response = await fetch(`${HOST_URL}/api/tweets/${tweetId}/update`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: updatedData,
-    });
+// export const updateTweet = async (tweetId: string, tokenId: string, updatedTweetData: { text: string; authorId: string }) => {
+//     const response = await fetch(`${HOST_URL}/api/tweets/${tweetId}/update`, {
+//         method: "PUT",
+//         headers: {
+//             "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//             tokenId, 
+//             ...updatedTweetData,
+//         }),
+//     });
 
-    const json = await response.json();
-    if (!json.success) throw new Error(json.message ? json.message : "Something went wrong.");
-    return json;
+//     const json = await response.json();
+//     if (!json.success) throw new Error(json.message ? json.message : "Something went wrong.");
+//     return json;
+// };
+
+
+export const updateTweet = async (
+    tweetId: string,
+    tokenId: string,
+    updatedTweetData: { text: string; authorId: string }
+) => {
+    try {
+        const response = await fetch(`${HOST_URL}/api/tweets/${updatedTweetData.authorId}/${tweetId}/update`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                tokenId, 
+                ...updatedTweetData,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update tweet: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error updating tweet:", error);
+        throw error;
+    }
 };
+
 
 
 

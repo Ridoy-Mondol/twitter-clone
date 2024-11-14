@@ -17,7 +17,6 @@ import Counters from "./Counters";
 import { getFullURL } from "@/utilities/misc/getFullURL";
 import { VerifiedToken } from "@/types/TokenProps";
 import { deleteTweet, updateTweet } from "@/utilities/fetch";
-import { NewTweetProps } from "@/types/TweetProps";
 import PreviewDialog from "../dialog/PreviewDialog";
 import { shimmer } from "@/utilities/misc/shimmer";
 import NewReply from "./NewReply";
@@ -29,6 +28,11 @@ import { sleepFunction } from "@/utilities/misc/sleep";
 
 import { useFormik } from "formik";
 import * as yup from "yup";
+import { json } from "stream/consumers";
+import ProgressCircle from "../misc/ProgressCircle";
+import Picker from "@emoji-mart/react";
+import data from "@emoji-mart/data";
+import { FaRegSmile } from "react-icons/fa";
 
 export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token: VerifiedToken }) {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -38,6 +42,7 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
     const [isDeleting, setIsDeleting] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [count, setCount] = useState(0);
+    const [showPicker, setShowPicker] = useState(false);
     const [snackbar, setSnackbar] = useState<SnackbarProps>({ message: "", severity: "success", open: false });
 
     const queryClient = useQueryClient();
@@ -53,7 +58,7 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
                 severity: "success",
                 open: true,
             });
-            await sleepFunction(); // for waiting snackbar to acknowledge delete for better user experience
+            await sleepFunction();
             queryClient.invalidateQueries(["tweets", tweet.author.username]);
             router.replace(`/${tweet.author.username}`);
         },
@@ -61,9 +66,14 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
     });
 
     const updateMutation = useMutation({
-        mutationFn: (updatedTweetData: { text: string; authorId: string }) => updateTweet(tweet.id, updatedTweetData),
+        mutationFn: (updatedTweetData: { text: string; authorId: string }) => updateTweet(tweet.id, JSON.stringify(token?.id), updatedTweetData),
         onSuccess: () => {
             queryClient.invalidateQueries(["tweets", tweet.author.username]);
+            setSnackbar({
+                message: "Tweet updated successfully.",
+                severity: "success",
+                open: true,
+            });
         },
         onError: (error) => console.error(error),
     });
@@ -103,35 +113,6 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
         mutation.mutate(jsonId);
     };
 
-
-    // const validationSchema = yup.object({
-    //     text: yup
-    //         .string()
-    //         .max(280, "Tweet text should be of maximum 280 characters length.")
-    //         .required("Tweet text can't be empty."),
-    // });
-
-    // const formik = useFormik({
-    //     initialValues: {
-    //         text: tweet.text,
-    //         authorId: tweet.authorId,
-    //     },
-    //     enableReinitialize: true,
-    //     validationSchema: validationSchema,
-    //     onSubmit: async (values, { resetForm }) => {
-    //         try {
-    //             setIsUpdating(true);
-    //             await updateMutation.mutateAsync(values);
-    //             resetForm();
-    //             setIsUpdateOpen(false); 
-    //         } catch (error) {
-    //             console.error("Failed to update tweet:", error);
-    //         } finally {
-    //             setIsUpdating(false);
-    //         }
-    //     },
-    // });
-
     const validationSchema = yup.object({
         text: yup
             .string()
@@ -149,6 +130,7 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
         onSubmit: async (values, { resetForm }) => {
             try {
                 setIsUpdating(true);
+                console.log('val',values);
                 await updateMutation.mutateAsync(values);
                 resetForm();
                 setIsUpdateOpen(false);
@@ -258,6 +240,8 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
             {snackbar.open && (
                 <CustomSnackbar message={snackbar.message} severity={snackbar.severity} setSnackbar={setSnackbar} />
             )}
+
+            {/* Delete Tweet */}
             {isConfirmationOpen && (
                 <div className="html-modal-wrapper">
                     <dialog open className="confirm">
@@ -281,34 +265,80 @@ export default function SingleTweet({ tweet, token }: { tweet: TweetProps; token
                     </dialog>
                 </div>
             )}
+            
 
-            {isUpdateOpen && (
-                <div className="html-modal-wrapper">
-                <dialog open className="confirm" onClick={(e) => e.stopPropagation()}>
-                    <h1>Update Tweet</h1>
-                    <form onSubmit={formik.handleSubmit}>
-                        <TextField
-                            placeholder="What's happening?"
-                            multiline
-                            fullWidth
-                            minRows={3}
-                            name="text"
-                            value={formik.values.text}
-                            onChange={customHandleChange}
-                            error={formik.touched.text && Boolean(formik.errors.text)}
-                            helperText={formik.touched.text && formik.errors.text}
+        {/* Update Tweet */}
+       {isUpdateOpen && (
+        <div className="html-modal-wrapper">
+        <dialog open className="new-tweet-form" onClick={(e) => e.stopPropagation()}>
+            <Avatar
+                className="avatar div-link"
+                sx={{ width: 50, height: 50 }}
+                alt=""
+                src={token?.photoUrl ? getFullURL(token?.photoUrl) : "/assets/egg.jpg"}
+            />
+            <form onSubmit={formik.handleSubmit}>
+                <div className="input">
+                    <TextField
+                        placeholder="Update your tweet..."
+                        multiline
+                        hiddenLabel
+                        minRows={3}
+                        variant="standard"
+                        fullWidth
+                        name="text"
+                        value={formik.values.text}
+                        onChange={customHandleChange}
+                        error={formik.touched.text && Boolean(formik.errors.text)}
+                        helperText={formik.touched.text && formik.errors.text}
+                    />
+                </div>
+                <div className="input-additions">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setShowPicker(!showPicker);
+                        }}
+                        className="icon-hoverable"
+                    >
+                        <FaRegSmile />
+                    </button>
+                    <ProgressCircle maxChars={280} count={formik.values.text.length} />
+                    <button
+                        className={`btn ${formik.isValid ? "" : "disabled"}`}
+                        disabled={!formik.isValid || isUpdating}
+                        type="submit"
+                    >
+                        {isUpdating ? "Updating..." : "Save"}
+                    </button>
+                    <button
+                        className="btn btn-white"
+                        type="button"
+                        onClick={() => setIsUpdateOpen(false)}
+                    >
+                        Close
+                    </button>
+                </div>
+                {/* Emoji Picker Component */}
+                {showPicker && (
+                    <div className="emoji-picker">
+                        <Picker
+                            data={data}
+                            onEmojiSelect={(emoji: any) => {
+                                formik.setFieldValue("text", formik.values.text + emoji.native);
+                                setShowPicker(false);
+                                setCount(formik.values.text.length + emoji.native.length);
+                            }}
+                            previewPosition="none"
                         />
-                        {isUpdating ? <CircularLoading /> : (
-                            <>
-                                <button type="submit"
-                                className="btn btn-danger">Save</button>
-                                <button className="btn btn-white" onClick={() => setIsUpdateOpen(false)}>Cancel</button>
-                            </>
-                        )}
-                    </form>
-                </dialog>
-            </div>
-            )}
+                    </div>
+                )}
+             </form>
+           </dialog>
+         </div>
+        )}
+
+
 
 
         </div>

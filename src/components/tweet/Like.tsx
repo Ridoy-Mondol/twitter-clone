@@ -1,3 +1,4 @@
+"use client";
 import { useContext, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
@@ -8,7 +9,6 @@ import { getUserTweet, updateTweetLikes } from "@/utilities/fetch";
 import { AuthContext } from "@/app/(twitter)/layout";
 import { SnackbarProps } from "@/types/SnackbarProps";
 import CustomSnackbar from "../misc/CustomSnackbar";
-import { UserProps } from "@/types/UserProps";
 
 export default function Like({ tweetId, tweetAuthor }: TweetOptionsProps) {
     const [isLiked, setIsLiked] = useState(false);
@@ -23,6 +23,12 @@ export default function Like({ tweetId, tweetAuthor }: TweetOptionsProps) {
     const { isFetched, data } = useQuery({
         queryKey: queryKey,
         queryFn: () => getUserTweet(tweetId, tweetAuthor),
+        onSuccess: (data) => {
+            const tokenOwnerId = JSON.stringify(token?.id);
+            const likedBy = data?.tweet?.likedBy;
+            const isLikedByTokenOwner = likedBy?.some((user: { id: string }) => JSON.stringify(user.id) === tokenOwnerId);
+            setIsLiked(isLikedByTokenOwner);
+        },
     });
 
     const likeMutation = useMutation({
@@ -31,16 +37,6 @@ export default function Like({ tweetId, tweetAuthor }: TweetOptionsProps) {
             setIsButtonDisabled(true);
             await queryClient.cancelQueries({ queryKey: queryKey });
             const previousTweet = queryClient.getQueryData<TweetResponse>(queryKey);
-            setIsLiked(true);
-            if (previousTweet) {
-                queryClient.setQueryData(queryKey, {
-                    ...previousTweet,
-                    tweet: {
-                        ...previousTweet.tweet,
-                        likedBy: [...previousTweet.tweet.likedBy, tokenOwnerId],
-                    },
-                });
-            }
             return { previousTweet };
         },
         onError: (err, variables, context) => {
@@ -59,18 +55,6 @@ export default function Like({ tweetId, tweetAuthor }: TweetOptionsProps) {
             setIsButtonDisabled(true);
             await queryClient.cancelQueries({ queryKey: queryKey });
             const previous = queryClient.getQueryData<TweetResponse>(queryKey);
-            setIsLiked(false);
-            if (previous) {
-                queryClient.setQueryData(queryKey, {
-                    ...previous,
-                    tweet: {
-                        ...previous.tweet,
-                        likedBy: previous.tweet.likedBy.filter(
-                            (user: UserProps) => JSON.stringify(user.id) !== tokenOwnerId
-                        ),
-                    },
-                });
-            }
             return { previous };
         },
         onError: (err, variables, context) => {
@@ -93,7 +77,7 @@ export default function Like({ tweetId, tweetAuthor }: TweetOptionsProps) {
         }
 
         const tokenOwnerId = JSON.stringify(token.id);
-        const likedBy = data.tweet?.likedBy;
+        const likedBy = data?.tweet?.likedBy;
         const isLikedByTokenOwner = likedBy.some((user: { id: string }) => JSON.stringify(user.id) === tokenOwnerId);
 
         if (!likeMutation.isLoading && !unlikeMutation.isLoading) {
@@ -125,14 +109,14 @@ export default function Like({ tweetId, tweetAuthor }: TweetOptionsProps) {
     return (
         <>
             <motion.button
-                className={`icon like ${isLiked ? "active" : ""}`}
+                className={`icon like ${(data?.tweet?.likedBy?.length > 0) && isLiked ? "active" : ""}`}
                 onClick={handleLike}
                 whileTap={{ scale: 0.9 }}
                 animate={{ scale: isLiked ? [1, 1.5, 1.2, 1] : 1 }}
                 transition={{ duration: 0.25 }}
                 disabled={isButtonDisabled}
             >
-                {isLiked ? (
+                {(data?.tweet?.likedBy?.length > 0) && isLiked ? (
                     <motion.span animate={{ scale: [1, 1.5, 1.2, 1] }} transition={{ duration: 0.25 }}>
                         <FaHeart />
                     </motion.span>
