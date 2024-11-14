@@ -209,24 +209,6 @@ export const deleteTweet = async (tweetId: string, tweetAuthor: string, tokenOwn
     return json;
 };
 
-// export const updateTweet = async (tweetId: string, tokenId: string, updatedTweetData: { text: string; authorId: string }) => {
-//     const response = await fetch(`${HOST_URL}/api/tweets/${tweetId}/update`, {
-//         method: "PUT",
-//         headers: {
-//             "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//             tokenId, 
-//             ...updatedTweetData,
-//         }),
-//     });
-
-//     const json = await response.json();
-//     if (!json.success) throw new Error(json.message ? json.message : "Something went wrong.");
-//     return json;
-// };
-
-
 export const updateTweet = async (
     tweetId: string,
     tokenId: string,
@@ -254,9 +236,6 @@ export const updateTweet = async (
         throw error;
     }
 };
-
-
-
 
 export const createReply = async (reply: string, tweetAuthor: string, tweetId: string) => {
     const response = await fetch(`${HOST_URL}/api/tweets/${tweetAuthor}/${tweetId}/reply`, {
