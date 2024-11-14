@@ -22,7 +22,7 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "postinstall": "cd src && npx prisma generate --schema=prisma/schema.prisma"
+        "postinstall": "cd src && npx prisma generate"
     },
     "dependencies": {
         "@emoji-mart/data": "^1.1.2",
