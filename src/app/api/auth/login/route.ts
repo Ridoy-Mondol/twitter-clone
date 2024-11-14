@@ -9,6 +9,8 @@ export async function POST(request: NextRequest) {
     const { username, password } = await request.json();
 
     try {
+        console.log("NODE_ENV:", process.env.NODE_ENV);
+        console.log("Connecting to database...");
         const user = await prisma.user.findFirst({
             where: {
                 username: username,
