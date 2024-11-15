@@ -88,7 +88,7 @@ export default function Messages({ selectedMessages, messagedUsername, handleCon
             .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload: any) => {
                 const newMessage: MessageProps = payload.new;
 
-                if (newMessage.username === messagedUsername || newMessage.receiver === messagedUsername) {
+                if (newMessage.sender.username === messagedUsername || newMessage.recipient.username === messagedUsername) {
                     setFreshMessages((prevMessages) => [...prevMessages, newMessage]);
                 }
             })
