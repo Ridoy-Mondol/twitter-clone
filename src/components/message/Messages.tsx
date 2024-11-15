@@ -199,7 +199,7 @@ export default function Messages({ selectedMessages, messagedUsername, handleCon
                         username: recipientData.username,
                         id: newMessage.recipientId,
                     },
-                    createdAt: new Date(newMessage.createdAt),
+                    createdAt: new Date(newMessage.createdAt).toLocaleString(),
                     photoUrl: newMessage.photoUrl || "",
                     text: newMessage.text,
                 };
