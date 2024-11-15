@@ -84,8 +84,8 @@ export default function Messages({ selectedMessages, messagedUsername, handleCon
 
     useEffect(() => {
         const channel = supabase
-            .channel("realtime:messages")
-            .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload: any) => {
+            .channel("realtime:Message")
+            .on("postgres_changes", { event: "*", schema: "public", table: "Message" }, (payload: any) => {
                 const newMessage: MessageProps = payload.new;
 
                 if (newMessage.sender.username === messagedUsername || newMessage.recipient.username === messagedUsername) {
