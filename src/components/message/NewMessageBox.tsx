@@ -22,22 +22,22 @@ export default function NewMessageBox({ messagedUsername, token, setFreshMessage
 
     const mutation = useMutation({
         mutationFn: createMessage,
-        onMutate: () => {
-            const newMessage = {
-                photoUrl: formik.values.photoUrl,
-                text: formik.values.text,
-                createdAt: Date.now(),
-                sender: {
-                    username: formik.values.sender,
-                },
-                recipient: {
-                    username: formik.values.recipient,
-                },
-                id: Math.floor(Math.random() * 1000000).toString(),
-            };
-            setFreshMessages([...freshMessages, newMessage]);
-            formik.resetForm();
-        },
+        // onMutate: () => {
+        //     const newMessage = {
+        //         photoUrl: formik.values.photoUrl,
+        //         text: formik.values.text,
+        //         createdAt: new Date(Date.now()).toLocaleString(),
+        //         sender: {
+        //             username: formik.values.sender,
+        //         },
+        //         recipient: {
+        //             username: formik.values.recipient,
+        //         },
+        //         id: Math.floor(Math.random() * 1000000).toString(),
+        //     };
+        //     setFreshMessages([...freshMessages, newMessage]);
+        //     formik.resetForm();
+        // },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["messages", token.username] });
         },
@@ -72,6 +72,7 @@ export default function NewMessageBox({ messagedUsername, token, setFreshMessage
             }
             mutation.mutate(JSON.stringify(values));
             setShowDropzone(false);
+            formik.resetForm({ values: { ...formik.initialValues } });
         },
     });
 
@@ -139,3 +140,10 @@ export default function NewMessageBox({ messagedUsername, token, setFreshMessage
         </div>
     );
 }
+
+
+
+
+
+
+

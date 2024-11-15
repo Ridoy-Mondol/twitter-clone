@@ -40,3 +40,4 @@ export default function Message({ message, messagedUsername }: { message: Messag
         </div>
     );
 }
+
