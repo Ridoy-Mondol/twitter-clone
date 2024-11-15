@@ -53,6 +53,8 @@ export default function Messages({ selectedMessages, messagedUsername, handleCon
                     return;
                 }
 
+                const formattedCreatedAt = new Date(newMessage.createdAt + "Z").toISOString();
+
                 // Construct the complete message object
                 const updatedMessage: MessageProps = {
                     ...newMessage,
@@ -64,7 +66,7 @@ export default function Messages({ selectedMessages, messagedUsername, handleCon
                         username: recipientData.username,
                         id: newMessage.recipientId,
                     },
-                    createdAt: new Date(newMessage.createdAt).toLocaleString(),
+                    createdAt: formattedCreatedAt,
                     photoUrl: newMessage.photoUrl || "",
                     text: newMessage.text,
                 };
