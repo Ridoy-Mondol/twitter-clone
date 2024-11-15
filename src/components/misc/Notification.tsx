@@ -7,7 +7,7 @@ import { GiPartyPopper } from "react-icons/gi";
 import { RiChatFollowUpLine } from "react-icons/ri";
 import { Avatar, Popover } from "@mui/material";
 
-import { NotificationProps } from "@/types/NotificationProps";
+import { NotificationProps, NotificationContent } from "@/types/NotificationProps";  // Import NotificationContent
 import { getFullURL } from "@/utilities/misc/getFullURL";
 import RetweetIcon from "./RetweetIcon";
 import ProfileCard from "../user/ProfileCard";
@@ -19,14 +19,31 @@ export default function Notification({ notification, token }: { notification: No
     const handlePopoverOpen = (e: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(e.currentTarget);
     };
+
     const handlePopoverClose = () => {
         setAnchorEl(null);
     };
 
-    const content = JSON.parse(notification.content);
+    // Safely handle content, checking if it's a string or an object
+    let content: NotificationContent | null = null;
 
-    const tweetUrl = `/${notification.user.username}/tweets/${content?.content?.id}`;
-    const profileUrl = `/${content?.sender.username}`;
+    if (typeof notification.content === "string") {
+        try {
+            content = JSON.parse(notification.content);  // Parse the content if it's a string
+        } catch (error) {
+            console.error("Failed to parse content:", error);
+        }
+    } else {
+        content = notification.content;  // If it's already a NotificationContent object
+    }
+
+    // Ensure content and user properties are defined
+    const username = notification?.user?.username || "";
+    const senderUsername = content?.sender?.username || "";
+    const tweetId = content?.content?.id || "";
+
+    const tweetUrl = tweetId ? `/${username}/tweets/${tweetId}` : "#";
+    const profileUrl = senderUsername ? `/${senderUsername}` : "#";
 
     const popoverJSX = (
         <Popover
@@ -46,7 +63,7 @@ export default function Notification({ notification, token }: { notification: No
             onClose={handlePopoverClose}
             disableRestoreFocus
         >
-            <ProfileCard username={content?.sender.username} token={token} />
+            <ProfileCard username={senderUsername} token={token} />
         </Popover>
     );
 
@@ -61,12 +78,12 @@ export default function Notification({ notification, token }: { notification: No
                 <Avatar
                     sx={{ width: 33, height: 33 }}
                     alt=""
-                    src={content?.sender.photoUrl ? getFullURL(content?.sender.photoUrl) : "/assets/egg.jpg"}
+                    src={content?.sender?.photoUrl ? getFullURL(content?.sender?.photoUrl) : "/assets/egg.jpg"}
                 />
                 <div className="profile-info-main">
                     <h1>
-                        {content?.sender.name !== "" ? content?.sender.name : content?.sender.username}{" "}
-                        <span className="text-muted">(@{content?.sender.username})</span>
+                        {content?.sender?.name !== "" ? content?.sender?.name : content?.sender?.username}{" "}
+                        <span className="text-muted">(@{content?.sender?.username})</span>
                     </h1>
                 </div>
             </Link>
